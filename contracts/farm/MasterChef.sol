@@ -219,7 +219,7 @@ contract MasterChef is Ownable {
         userClear(_pair, to, _poolInfo, _userInfo);
         uint shares = _amount.mul(ratio);
         if (_amount > 0) {
-            SafeERC20.safeTransferFrom(IERC20(address(_pair)), to, address(this), _amount);
+            SafeERC20.safeTransferFrom(IERC20(address(_pair)), msg.sender, address(this), _amount);
             userLockInfo[_pair][to].push(UserLockInfo({
                 amount: _amount,
                 shares: shares,
