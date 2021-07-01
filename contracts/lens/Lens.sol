@@ -29,6 +29,10 @@ contract Lens is Ownable {
         uint expireAt;
     }
 
+    function getLockInfoLength(IMasterChef _masterChef, IKeplerPair _pair, address user, uint from, uint size) external view returns (uint256) {
+        return _masterChef.userLockNum(_pair, user);
+    }
+
     function getLockInfo(IMasterChef _masterChef, IKeplerPair _pair, address user, uint from, uint size) external view returns (UserLockInfo[] memory) {
         string memory symbol0 = ERC20(_pair.token0()).symbol();
         string memory symbol1 = ERC20(_pair.token1()).symbol();
