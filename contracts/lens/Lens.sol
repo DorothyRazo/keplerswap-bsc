@@ -63,17 +63,27 @@ contract Lens is Ownable {
         uint affect;
     }
 
-    function getSwapInfoIn(IKeplerFactory _factory, address[] memory _path, uint amountIn) external view returns (SwapInfo memory swapInfo) {
+    function getSwapInfoOut(IKeplerFactory _factory, address[] memory _path, uint amountIn) external view returns (SwapInfo memory swapInfo) {
         swapInfo.amountIn = amountIn;
         uint256[] memory fees = _factory.getTransferFee(_path);
         swapInfo.fee = fees[0].mul(amountIn).div(1000);
         uint256[] memory amounts = KeplerLibrary.getAmountsOut(address(_factory), amountIn, _path, fees);
-        swapInfo.amountOut = amounts[0];
+        swapInfo.amountOut = amounts[amounts.length - 1];
         (uint reserve0, uint reserve1, ) = IKeplerPair(_factory.getPair(_path[0], _path[1])).getReserves();
         uint reserve = _path[0] == IKeplerPair(_factory.getPair(_path[0], _path[1])).token0() ? reserve0 : reserve1;
         swapInfo.affect = amounts[0].sub(fees[0]).mul(1e18).div(reserve.add(amounts[0].sub(fees[0])));
     }
 
+    function getSwapInfoIn(IKeplerFactory _factory, address[] memory _path, uint amountOut) external view returns (SwapInfo memory swapInfo) {
+        swapInfo.amountOut = amountOut;
+        uint256[] memory fees = _factory.getTransferFee(_path);
+        uint256[] memory amounts = KeplerLibrary.getAmountsIn(address(_factory), amountOut, _path, fees);
+        swapInfo.fee = fees[0].mul(amounts[0]).div(1000);
+        swapInfo.amountIn = amounts[0];
+        (uint reserve0, uint reserve1, ) = IKeplerPair(_factory.getPair(_path[0], _path[1])).getReserves();
+        uint reserve = _path[0] == IKeplerPair(_factory.getPair(_path[0], _path[1])).token0() ? reserve0 : reserve1;
+        swapInfo.affect = amounts[0].sub(fees[0]).mul(1e18).div(reserve.add(amounts[0].sub(fees[0])));
+    }
 
     function pendingMine(IMasterChef _masterChef, IKeplerPair _pair, address _token, address _user) external view returns (uint256) {
         address token0 = _pair.token0();
