@@ -53,6 +53,11 @@
         "internalType": "uint256",
         "name": "deadline",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lockType",
+        "type": "uint256"
       }
     ],
     "name": "addLiquidity",
@@ -106,6 +111,11 @@
       {
         "internalType": "uint256",
         "name": "deadline",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lockType",
         "type": "uint256"
       }
     ],

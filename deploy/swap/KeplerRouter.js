@@ -12,13 +12,14 @@ module.exports = async function ({
         let WBNB = await ethers.getContract('MockToken_WBNB');
         WBNBAddress = WBNB.address;
     }
+    let masterChef = await ethers.getContract('MasterChef');
     let keplerFactory = await ethers.getContract('KeplerFactory');
     let deployResult = await deploy('KeplerRouter', {
         from: deployer.address,
-        args: [keplerFactory.address, WBNBAddress],
+        args: [keplerFactory.address, WBNBAddress, masterChef.address],
         log: true,
     });
 };
 
 module.exports.tags = ['KeplerRouter'];
-module.exports.dependencies = [/*'KeplerFactory', 'MockToken'*/];
+module.exports.dependencies = ['KeplerFactory', 'MockToken', 'MasterChef'];

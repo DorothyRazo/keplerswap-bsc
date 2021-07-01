@@ -19,10 +19,10 @@ contract KeplerFactory is Ownable {
     mapping(address => mapping(address => address)) public getPair;
     uint public allPairsLength;
     bool public whiteListAvaliable;
-    mapping(address => bool) whiteList;
-    uint defaultTransferFee;
-    mapping(address => uint) tokenTransferFee;
-    mapping(address => uint) relateTransferFee;
+    mapping(address => bool) public whiteList;
+    uint public defaultTransferFee;
+    mapping(address => uint) public tokenTransferFee;
+    mapping(address => uint) public relateTransferFee;
 
     uint256 public currentSnapshotId;
     mapping(address => mapping(address => uint256)) userSnapshotId;

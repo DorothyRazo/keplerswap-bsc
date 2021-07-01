@@ -12,6 +12,9 @@ module.exports = async function ({
         from: deployer.address,
         args: [],
         log: true,
+        proxy: {
+            proxyContract: 'OptimizedTransparentProxy',
+        },
     });
 };
 

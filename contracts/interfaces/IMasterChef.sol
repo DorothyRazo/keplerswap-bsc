@@ -19,6 +19,8 @@ interface IMasterChef {
 
     function deposit(IKeplerPair _pair, uint256 _amount, uint256 _lockType) external;
 
+    function depositFor(IKeplerPair _pair, uint256 _amount, uint256 _lockType, address to) external;
+
     function getPoolInfo(IKeplerPair _pair) external view returns (uint256 totalShares, uint256 token0AccPerShare, uint256 token1AccPerShare);
 
     function getUserInfo(IKeplerPair _pair, address _user) external view returns (uint256 amount, uint256 shares, uint256 token0Debt, uint256 token1Debt, uint256 token0Pending, uint256 token1Pending);
@@ -29,4 +31,7 @@ interface IMasterChef {
 
     function doInviteMiner(IKeplerPair pair, IERC20 token, uint256 amount) external;
 
+    function userLockNum(IKeplerPair _pair, address user) external view returns (uint256);
+
+    function userLockInfo(IKeplerPair _pair, address _user, uint256 id) external view returns (uint256, uint256, uint256, uint256);
 }

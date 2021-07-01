@@ -8,26 +8,26 @@ import '../libraries/KeplerLibrary.sol';
 import '../libraries/TransferHelper.sol';
 import '../interfaces/IWETH.sol';
 import '../interfaces/IFeeDispatcher.sol';
+import '../interfaces/IMasterChef.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import 'hardhat/console.sol';
-/*
-import '../interfaces/IERC20.sol';
-*/
 contract KeplerRouter is IKeplerRouter {
     using SafeMath for uint256;
 
     address public immutable override factory;
     address public immutable override WETH;
+    IMasterChef public masterChef;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'BabyRouter: EXPIRED');
         _;
     }
 
-    constructor(address _factory, address _WETH) {
+    constructor(address _factory, address _WETH, IMasterChef _masterChef) {
         factory = _factory;
         WETH = _WETH;
+        masterChef = _masterChef;
     }
 
     receive() external payable {
@@ -72,13 +72,20 @@ contract KeplerRouter is IKeplerRouter {
         uint amountAMin,
         uint amountBMin,
         address to,
-        uint deadline
+        uint deadline,
+        uint lockType
     ) external override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = KeplerLibrary.pairFor(factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
-        liquidity = IKeplerPair(pair).mint(to);
+        if (address(masterChef) != address(0)) {
+            liquidity = IKeplerPair(pair).mint(address(this));
+            IKeplerPair(pair).approve(address(masterChef), liquidity);
+            masterChef.depositFor(IKeplerPair(pair), liquidity, lockType, to);
+        } else {
+            liquidity = IKeplerPair(pair).mint(to);
+        }
     }
     function addLiquidityETH(
         address token,
@@ -86,7 +93,8 @@ contract KeplerRouter is IKeplerRouter {
         uint amountTokenMin,
         uint amountETHMin,
         address to,
-        uint deadline
+        uint deadline,
+        uint lockType
     ) external override payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
         (amountToken, amountETH) = _addLiquidity(
             token,
@@ -101,6 +109,13 @@ contract KeplerRouter is IKeplerRouter {
         IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = IKeplerPair(pair).mint(to);
+        if (address(masterChef) != address(0)) {
+            liquidity = IKeplerPair(pair).mint(address(this));
+            IKeplerPair(pair).approve(address(masterChef), liquidity);
+            masterChef.depositFor(IKeplerPair(pair), liquidity, lockType, to);
+        } else {
+            liquidity = IKeplerPair(pair).mint(to);
+        }
         if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH); // refund dust eth, if any
     }
 

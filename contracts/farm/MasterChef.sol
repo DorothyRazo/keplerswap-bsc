@@ -7,13 +7,17 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../interfaces/IKeplerPair.sol';
+import '../interfaces/IKeplerRouter.sol';
 import '../interfaces/IUser.sol';
+import '../interfaces/IWETH.sol';
+import '../libraries/KeplerLibrary.sol';
 import 'hardhat/console.sol';
 
 contract MasterChef is Ownable {
     using SafeMath for uint256;
 
     IUser user;
+    address public immutable WETH;
 
     uint256 public currentSnapshotId;
     mapping(IKeplerPair => mapping(address => uint256)) userSnapshotId;
@@ -56,8 +60,13 @@ contract MasterChef is Ownable {
     event Deposit(address indexed user, address indexed pair, uint256 amount, uint256 lockType);
     event Withdraw(address indexed user, uint256 lockID, uint256 amount, uint256 shares, uint256 lockType);
 
-    constructor(IUser _user) {
+    constructor(IUser _user, address _weth) {
         user = _user;
+        WETH = _weth;
+    }
+
+    function userLockNum(IKeplerPair _pair, address _user) external view returns (uint256) {
+        return userLockInfo[_pair][_user].length;
     }
 
     function setSnapshotCreateCaller(address _snapshotCreateCaller) external onlyOwner {
@@ -199,33 +208,37 @@ contract MasterChef is Ownable {
     }
 
     function deposit(IKeplerPair _pair, uint256 _amount, uint256 _lockType) external {
+        depositFor(_pair, _amount, _lockType, msg.sender);
+    }
+
+    function depositFor(IKeplerPair _pair, uint256 _amount, uint256 _lockType, address to) public {
         addDefaultPool(_pair);
         (uint ratio, uint lockTime) = getType(_lockType);
         PoolInfo memory _poolInfo = poolInfo[_pair];
-        UserInfo memory _userInfo = userInfo[_pair][msg.sender];
-        userClear(_pair, msg.sender, _poolInfo, _userInfo);
+        UserInfo memory _userInfo = userInfo[_pair][to];
+        userClear(_pair, to, _poolInfo, _userInfo);
         uint shares = _amount.mul(ratio);
         if (_amount > 0) {
-            SafeERC20.safeTransferFrom(IERC20(address(_pair)), msg.sender, address(this), _amount);
-            userLockInfo[_pair][msg.sender].push(UserLockInfo({
+            SafeERC20.safeTransferFrom(IERC20(address(_pair)), to, address(this), _amount);
+            userLockInfo[_pair][to].push(UserLockInfo({
                 amount: _amount,
                 shares: shares,
                 lockType: _lockType,
                 expireAt: block.timestamp + lockTime
             }));
             if (_userInfo.shares == 0) {
-                inviterClear(_pair, msg.sender);
-                inviterPoolInfo[_pair].totalShares = inviterPoolInfo[_pair].totalShares.add(inviterUserInfo[_pair][msg.sender].shares);
+                inviterClear(_pair, to);
+                inviterPoolInfo[_pair].totalShares = inviterPoolInfo[_pair].totalShares.add(inviterUserInfo[_pair][to].shares);
             }
             poolInfo[_pair].totalShares = _poolInfo.totalShares.add(shares);
-            userInfo[_pair][msg.sender].shares = _userInfo.shares.add(shares);
-            userInfo[_pair][msg.sender].amount = _userInfo.amount.add(_amount);
-            userInfo[_pair][msg.sender].token0Debt = _userInfo.shares.add(shares).mul(_poolInfo.token0AccPerShare).div(RATIO);
-            userInfo[_pair][msg.sender].token1Debt = _userInfo.shares.add(shares).mul(_poolInfo.token1AccPerShare).div(RATIO);
-            userLockTypeAmount[_pair][msg.sender][_lockType] = userLockTypeAmount[_pair][msg.sender][_lockType].add(_amount);
+            userInfo[_pair][to].shares = _userInfo.shares.add(shares);
+            userInfo[_pair][to].amount = _userInfo.amount.add(_amount);
+            userInfo[_pair][to].token0Debt = _userInfo.shares.add(shares).mul(_poolInfo.token0AccPerShare).div(RATIO);
+            userInfo[_pair][to].token1Debt = _userInfo.shares.add(shares).mul(_poolInfo.token1AccPerShare).div(RATIO);
+            userLockTypeAmount[_pair][to][_lockType] = userLockTypeAmount[_pair][to][_lockType].add(_amount);
         }
-        inviteDeposit(msg.sender, _pair, _amount, shares);
-        emit Deposit(msg.sender, address(_pair), _amount, _lockType);
+        inviteDeposit(to, _pair, _amount, shares);
+        emit Deposit(to, address(_pair), _amount, _lockType);
     }
 
     function inviteWithdraw(address _user, IKeplerPair _pair, uint256 _amount, uint256 _shares) internal {
@@ -262,7 +275,24 @@ contract MasterChef is Ownable {
             inviterPoolInfo[_pair].totalShares = inviterPoolInfo[_pair].totalShares.sub(inviterUserInfo[_pair][msg.sender].shares);
         }
         if (_userLockInfo.amount > 0) {
-            SafeERC20.safeTransfer(IERC20(address(_pair)), msg.sender, _userLockInfo.amount);
+            address token0 = _pair.token0();
+            address token1 = _pair.token1();
+            _pair.transfer(address(_pair), _userLockInfo.amount); // send liquidity to pair
+            if (token0 == WETH) {
+                (uint amount0, uint amount1) = _pair.burn(address(this));
+                SafeERC20.safeTransfer(IERC20(token1), msg.sender, amount1);
+                IWETH(WETH).withdraw(amount0);
+                (bool success,) = msg.sender.call{value:amount0}(new bytes(0));
+                require(success, 'TransferHelper: ETH_TRANSFER_FAILED');
+            } else if (token1 == WETH) {
+                (uint amount0, uint amount1) = _pair.burn(address(this));
+                SafeERC20.safeTransfer(IERC20(token0), msg.sender, amount0);
+                IWETH(WETH).withdraw(amount1);
+                (bool success,) = msg.sender.call{value:amount1}(new bytes(0));
+                require(success, 'TransferHelper: ETH_TRANSFER_FAILED');
+            } else {
+                _pair.burn(msg.sender);
+            }
         }
         uint256 _amount = _userLockInfo.amount;
         uint256 _shares = _userLockInfo.shares;

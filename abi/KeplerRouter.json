@@ -10,6 +10,11 @@
         "internalType": "address",
         "name": "_WETH",
         "type": "address"
+      },
+      {
+        "internalType": "contract IMasterChef",
+        "name": "_masterChef",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -69,6 +74,11 @@
         "internalType": "uint256",
         "name": "deadline",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lockType",
+        "type": "uint256"
       }
     ],
     "name": "addLiquidity",
@@ -123,6 +133,11 @@
         "internalType": "uint256",
         "name": "deadline",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lockType",
+        "type": "uint256"
       }
     ],
     "name": "addLiquidityETH",
@@ -152,6 +167,19 @@
     "outputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "masterChef",
+    "outputs": [
+      {
+        "internalType": "contract IMasterChef",
         "name": "",
         "type": "address"
       }
