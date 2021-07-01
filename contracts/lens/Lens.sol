@@ -8,6 +8,8 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '../libraries/KeplerLibrary.sol';
+import '../interfaces/IKeplerFactory.sol';
 import '../interfaces/IKeplerPair.sol';
 import '../interfaces/IMasterChef.sol';
 import '../interfaces/IUser.sol';
@@ -29,7 +31,7 @@ contract Lens is Ownable {
         uint expireAt;
     }
 
-    function getLockInfoLength(IMasterChef _masterChef, IKeplerPair _pair, address user, uint from, uint size) external view returns (uint256) {
+    function getLockInfoLength(IMasterChef _masterChef, IKeplerPair _pair, address user) external view returns (uint256) {
         return _masterChef.userLockNum(_pair, user);
     }
 
@@ -53,6 +55,25 @@ contract Lens is Ownable {
         }
         return res;
     }
+
+    struct SwapInfo {
+        uint amountIn;
+        uint amountOut;
+        uint fee;
+        uint affect;
+    }
+
+    function getSwapInfoIn(IKeplerFactory _factory, address[] memory _path, uint amountIn) external view returns (SwapInfo memory swapInfo) {
+        swapInfo.amountIn = amountIn;
+        uint256[] memory fees = _factory.getTransferFee(_path);
+        swapInfo.fee = fees[0].mul(amountIn).div(1000);
+        uint256[] memory amounts = KeplerLibrary.getAmountsOut(address(_factory), amountIn, _path, fees);
+        swapInfo.amountOut = amounts[0];
+        (uint reserve0, uint reserve1, ) = IKeplerPair(_factory.getPair(_path[0], _path[1])).getReserves();
+        uint reserve = _path[0] == IKeplerPair(_factory.getPair(_path[0], _path[1])).token0() ? reserve0 : reserve1;
+        swapInfo.affect = amounts[0].sub(fees[0]).mul(1e18).div(reserve.add(amounts[0].sub(fees[0])));
+    }
+
 
     function pendingMine(IMasterChef _masterChef, IKeplerPair _pair, address _token, address _user) external view returns (uint256) {
         address token0 = _pair.token0();

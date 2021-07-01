@@ -120,16 +120,6 @@
         "internalType": "address",
         "name": "user",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "from",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "size",
-        "type": "uint256"
       }
     ],
     "name": "getLockInfoLength",
@@ -138,6 +128,57 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IKeplerFactory",
+        "name": "_factory",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_path",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountIn",
+        "type": "uint256"
+      }
+    ],
+    "name": "getSwapInfoIn",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "affect",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Lens.SwapInfo",
+        "name": "swapInfo",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
