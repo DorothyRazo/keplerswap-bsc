@@ -28,6 +28,7 @@ contract MasterChef is Ownable {
         uint256 amount;     
         uint256 shares;
         uint256 lockType;
+        uint256 depositAt;
         uint256 expireAt;
     }
 
@@ -224,6 +225,7 @@ contract MasterChef is Ownable {
                 amount: _amount,
                 shares: shares,
                 lockType: _lockType,
+                depositAt: block.timestamp,
                 expireAt: block.timestamp + lockTime
             }));
             if (_userInfo.shares == 0) {
@@ -301,6 +303,7 @@ contract MasterChef is Ownable {
             userLockInfo[_pair][msg.sender][_lockId].amount = lastUserLockInfo.amount;
             userLockInfo[_pair][msg.sender][_lockId].shares = lastUserLockInfo.shares;
             userLockInfo[_pair][msg.sender][_lockId].lockType = lastUserLockInfo.lockType;
+            userLockInfo[_pair][msg.sender][_lockId].depositAt = lastUserLockInfo.depositAt;
             userLockInfo[_pair][msg.sender][_lockId].expireAt = lastUserLockInfo.expireAt;
         }
         userLockInfo[_pair][msg.sender].pop();

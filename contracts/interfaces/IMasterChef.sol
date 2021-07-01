@@ -33,5 +33,5 @@ interface IMasterChef {
 
     function userLockNum(IKeplerPair _pair, address user) external view returns (uint256);
 
-    function userLockInfo(IKeplerPair _pair, address _user, uint256 id) external view returns (uint256, uint256, uint256, uint256);
+    function userLockInfo(IKeplerPair _pair, address _user, uint256 id) external view returns (uint256, uint256, uint256, uint256, uint256);
 }

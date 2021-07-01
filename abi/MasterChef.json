@@ -712,6 +712,11 @@
       },
       {
         "internalType": "uint256",
+        "name": "depositAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "expireAt",
         "type": "uint256"
       }

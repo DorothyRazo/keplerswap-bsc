@@ -56,6 +56,26 @@
             "type": "uint256"
           },
           {
+            "internalType": "string",
+            "name": "symbol0",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol1",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount1",
+            "type": "uint256"
+          },
+          {
             "internalType": "uint256",
             "name": "shares",
             "type": "uint256"
@@ -63,6 +83,11 @@
           {
             "internalType": "uint256",
             "name": "lockType",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "depositAt",
             "type": "uint256"
           },
           {
