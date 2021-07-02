@@ -124,4 +124,44 @@ contract Lens is Ownable {
     function pendingInvite(IInviter _inviter, address _token, address _user) external view returns (uint256) {
         return _inviter.profits(_user, _token);
     }
+
+    struct MineInfo {
+        string symbol0;
+        string symbol1;
+        uint256 amount;
+        uint256 shares;
+        uint256 amount0;
+        uint256 amount1;
+        uint256 percent;
+    }
+
+    function getMineInfo(IMasterChef _masterChef, IKeplerPair _pair, address _user) external view returns (MineInfo memory mineInfo) {
+        address token0 = _pair.token0();
+        address token1 = _pair.token1();
+        mineInfo.symbol0 = ERC20(token0).symbol();
+        mineInfo.symbol1 = ERC20(token1).symbol();
+        (mineInfo.amount, mineInfo.shares, , , ,) = _masterChef.getUserInfo(_pair, _user);
+        uint balance0 = IERC20(_pair.token0()).balanceOf(address(_pair));
+        uint balance1 = IERC20(_pair.token1()).balanceOf(address(_pair));
+        uint totalSupply = _pair.totalSupply(); 
+        mineInfo.amount0 = mineInfo.amount.mul(balance0).div(totalSupply);
+        mineInfo.amount1 = mineInfo.amount.mul(balance1).div(totalSupply);
+        (uint256 totalShares, ,) = _masterChef.getPoolInfo(_pair);
+        mineInfo.percent = mineInfo.shares.mul(1e18).div(totalShares);
+    }
+
+    function getInviteInfo(IMasterChef _masterChef, IKeplerPair _pair, address _user) external view returns (MineInfo memory mineInfo) {
+        address token0 = _pair.token0();
+        address token1 = _pair.token1();
+        mineInfo.symbol0 = ERC20(token0).symbol();
+        mineInfo.symbol1 = ERC20(token1).symbol();
+        (mineInfo.amount, mineInfo.shares, , , ,) = _masterChef.getInviteUserInfo(_pair, _user);
+        uint balance0 = IERC20(_pair.token0()).balanceOf(address(_pair));
+        uint balance1 = IERC20(_pair.token1()).balanceOf(address(_pair));
+        uint totalSupply = _pair.totalSupply(); 
+        mineInfo.amount0 = mineInfo.amount.mul(balance0).div(totalSupply);
+        mineInfo.amount1 = mineInfo.amount.mul(balance1).div(totalSupply);
+        (uint256 totalShares, ,) = _masterChef.getInvitePoolInfo(_pair);
+        mineInfo.percent = mineInfo.shares.mul(1e18).div(totalShares);
+    }
 }
